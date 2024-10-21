@@ -6,8 +6,6 @@ import (
 	"fmt"
 )
 
-//test
-
 func main() {
 	defer rmm.ResetTerminalMode()
 
