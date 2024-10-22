@@ -193,10 +193,10 @@ func BoxCharLnCond(index1 string, index2 string, condition bool) error {
 	return err
 }
 
-func ClearArea(row, col, width, height int) {
+func ClearArea(areaRow, areaCol, width, height int) {
 
-	for row := CursorRow; row < CursorRow+height; row++ {
-		SetCursor(row, col)
+	for row := CursorRow; row < areaRow+height; row++ {
+		SetCursor(row, areaCol)
 		rmm.ClearLine()
 	}
 }

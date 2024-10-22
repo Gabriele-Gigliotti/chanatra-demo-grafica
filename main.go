@@ -12,7 +12,9 @@ import (
 )
 
 func main() {
+	defer gracefulStop()
 	go gracefulInterrupt()
+
 	document.NewDocument()
 
 	fmt.Print(" Connesso alla Stanza: DEV")
@@ -33,11 +35,14 @@ func main() {
 
 	ma := elements.NewMessageArea(2, 1, int(rmm.TSize.Width), int(rmm.TSize.Height))
 
-	elements.SetCursor(int(rmm.TSize.Height)-1, 2)
 	var a int
+
+	elements.SetCursor(5, 2)
 	rmm.ScanInt(&a)
 
 	ma.Redraw()
+
+	elements.SetCursor(5, 2)
 	rmm.ScanInt(&a)
 
 }
@@ -48,8 +53,12 @@ func gracefulInterrupt() {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	<-sigs
+	gracefulStop()
+	os.Exit(0)
+}
+
+func gracefulStop() {
 	rmm.OSClear()
 	rmm.ResetTerminalMode()
 	fmt.Println("Chanatra was closed successfully.")
-	os.Exit(0)
 }
