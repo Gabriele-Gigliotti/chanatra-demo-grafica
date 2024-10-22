@@ -42,6 +42,10 @@ func MoveCursor(row, col int) {
 	fmt.Printf("\033[%d;%dH", row, col)
 }
 
+func ClearLine() {
+	fmt.Print("\033[2K")
+}
+
 func ResetTerm() {
 	fmt.Print("\033[2J\033[H")
 }

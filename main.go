@@ -17,17 +17,28 @@ func main() {
 
 	fmt.Print(" Connesso alla Stanza: DEV")
 
-	elements.SetCursor(2, 1)
-	elements.DrawBox(int(rmm.TSize.Width), int(rmm.TSize.Height)-4, elements.ThinBoxType, 0.50)
+	/*
+		elements.SetCursor(2, 1)
+		elements.DrawBox(int(rmm.TSize.Width), int(rmm.TSize.Height)-4, elements.ThinBoxType, 0.50)
 
-	elements.SetCursor(int(rmm.TSize.Height)-2, 1)
-	elements.DrawBasicBox(int(rmm.TSize.Width), 3, elements.ThinBoxType)
+		elements.SetCursor(int(rmm.TSize.Height)-2, 1)
+		elements.DrawBasicBox(int(rmm.TSize.Width), 3, elements.ThinBoxType)
 
-	for {
-		elements.SetCursor(int(rmm.TSize.Height)-1, 2)
-		var a int
-		rmm.ScanInt(&a)
-	}
+		for {
+			elements.SetCursor(int(rmm.TSize.Height)-1, 2)
+			var a int
+			rmm.ScanInt(&a)
+		}
+	*/
+
+	ma := elements.NewMessageArea(2, 1, int(rmm.TSize.Width), int(rmm.TSize.Height))
+
+	elements.SetCursor(int(rmm.TSize.Height)-1, 2)
+	var a int
+	rmm.ScanInt(&a)
+
+	ma.Redraw()
+	rmm.ScanInt(&a)
 
 }
 

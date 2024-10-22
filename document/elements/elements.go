@@ -7,14 +7,18 @@ import (
 )
 
 type element struct {
-	Row      int
-	Col      int
-	Width    int
-	Height   int
-	Selected bool
+	Row     int
+	Col     int
+	Width   int
+	Height  int
+	BoxMode int
 }
 
 func (e *element) ApplySelection() {
+	//default does nothing
+}
+
+func (e *element) Draw() {
 	//default does nothing
 }
 
@@ -22,18 +26,18 @@ func (e *element) Redraw() {
 	//default does nothing
 }
 
-func (e *element) SetSelection(selection bool) {
-	e.Selected = selection
+func (e *element) SetSelection(boxMode int) {
+	e.BoxMode = boxMode
 	e.ApplySelection()
 }
 
 func (e *element) Select() {
-	e.Selected = true
+	e.BoxMode = ThickBoxType
 	e.ApplySelection()
 }
 
 func (e *element) Deselect() {
-	e.Selected = false
+	e.BoxMode = ThinBoxType
 	e.ApplySelection()
 }
 
@@ -49,18 +53,34 @@ type MessageArea struct {
 }
 
 func NewMessageArea(row, col, width, height int) *MessageArea {
-	return &MessageArea{
+	ma := &MessageArea{
+		element: element{
+			Row:    row,
+			Col:    col,
+			Width:  width,
+			Height: height,
+		},
+
 		ScrollPercent: 0,
 		Messages:      []Message{},
 	}
+
+	ma.Draw()
+	return ma
 }
 
 func (e *MessageArea) ApplySelection() {
 	//default does nothing
 }
 
+func (e *MessageArea) Draw() {
+	SetCursor(e.Row, e.Col)
+	DrawBox(e.Width, e.Height, e.BoxMode, e.ScrollPercent)
+}
+
 func (e *MessageArea) Redraw() {
-	//default does nothing
+	ClearArea(e.Row, e.Col, e.Width, e.Height)
+	e.Draw()
 }
 
 func (m *MessageArea) ScrollTo(percent float32) {
@@ -75,13 +95,17 @@ type LargeInputArea struct {
 	element
 }
 
-func NewLargeInputArea() *LargeInputArea {
+func NewLargeInputArea(row, col, width, height int) *LargeInputArea {
 	return &LargeInputArea{
-		// TODO
+		//TODO
 	}
 }
 
 func (e *LargeInputArea) ApplySelection() {
+	//default does nothing
+}
+
+func (e *LargeInputArea) Draw() {
 	//default does nothing
 }
 
@@ -131,9 +155,9 @@ func SetCursor(row, col int) {
 func BoxChar(index string) error {
 	if char, exists := boxChars[index]; exists {
 		fmt.Printf("%s", string(char))
+		CursorCol = CursorCol + 1
 		return nil
 	}
-
 	return errors.New("Index " + index + " not found")
 }
 
@@ -142,7 +166,6 @@ func BoxCharLn(index string) error {
 		fmt.Print(string(char))
 		SetCursor(CursorRow+1, 1)
 	}
-
 	return errors.New("Index " + index + " not found")
 }
 
@@ -171,9 +194,11 @@ func BoxCharLnCond(index1 string, index2 string, condition bool) error {
 }
 
 func ClearArea(row, col, width, height int) {
-	SetCursor(row, col)
 
-	//for row := CursorCol
+	for row := CursorRow; row < CursorRow+height; row++ {
+		SetCursor(row, col)
+		rmm.ClearLine()
+	}
 }
 
 func DrawBasicBox(width, height int, boxType int) {
@@ -182,33 +207,37 @@ func DrawBasicBox(width, height int, boxType int) {
 
 func DrawBox(width, height int, boxType int, scrollPercent float32) {
 	isThin := boxType == 0
+	boxRow, boxCol := CursorRow, CursorCol
 
 	BoxCharCond("--se", "--SE", isThin)
-	for col := CursorCol + 1; col < width; col++ {
+	for col := CursorCol; col < boxCol+width-1; col++ {
 		rmm.MoveCursor(CursorRow, col)
 		BoxCharCond("-w-e", "-W-E", isThin)
 	}
 	BoxCharLnCond("-ws-", "-WS-", isThin)
 
-	for row := 1; row < height-1; row++ {
+	for row := CursorRow; row < boxRow+height-1; row++ {
 		BoxCharCond("n-s-", "N-S-", isThin)
 		rmm.MoveCursor(CursorRow, width)
+
+		// Moves cursor to a new line, either way
 		if scrollPercent != -1 {
 			if row == int(float32(height)*scrollPercent) {
 				BoxCharLnCond("C", "D", isThin)
 			} else {
 				BoxCharLnCond("A", "B", isThin)
 			}
-
 		} else {
 			BoxCharLnCond("n-s-", "N-S-", isThin)
 		}
 	}
 
 	BoxCharCond("n--e", "N--E", isThin)
-	for col := CursorCol + 1; col < width; col++ {
+	for col := CursorCol; col < boxCol+width-1; col++ {
 		rmm.MoveCursor(CursorRow, col)
 		BoxCharCond("-w-e", "-W-E", isThin)
 	}
 	BoxCharCond("nw--", "NW--", isThin)
+
+	rmm.MoveCursor(boxRow, boxCol)
 }
