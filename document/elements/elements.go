@@ -4,6 +4,7 @@ import (
 	"drawino/rmm"
 	"errors"
 	"fmt"
+	"strings"
 )
 
 type element struct {
@@ -11,34 +12,7 @@ type element struct {
 	Col     int
 	Width   int
 	Height  int
-	BoxMode int
-}
-
-func (e *element) ApplySelection() {
-	//default does nothing
-}
-
-func (e *element) Draw() {
-	//default does nothing
-}
-
-func (e *element) Redraw() {
-	//default does nothing
-}
-
-func (e *element) SetSelection(boxMode int) {
-	e.BoxMode = boxMode
-	e.ApplySelection()
-}
-
-func (e *element) Select() {
-	e.BoxMode = ThickBoxType
-	e.ApplySelection()
-}
-
-func (e *element) Deselect() {
-	e.BoxMode = ThinBoxType
-	e.ApplySelection()
+	BoxType int
 }
 
 type Message struct {
@@ -69,26 +43,43 @@ func NewMessageArea(row, col, width, height int) *MessageArea {
 	return ma
 }
 
-func (e *MessageArea) ApplySelection() {
-	//default does nothing
-}
-
-func (e *MessageArea) Draw() {
-	SetCursor(e.Row, e.Col)
-	DrawBox(e.Width, e.Height, e.BoxMode, e.ScrollPercent)
-}
-
 func (e *MessageArea) Redraw() {
 	ClearArea(e.Row, e.Col, e.Width, e.Height)
 	e.Draw()
 }
 
+func (e *MessageArea) Draw() {
+	SetCursor(e.Row, e.Col)
+	DrawBox(e.Width, e.Height, e.BoxType, e.ScrollPercent)
+	//TODO: draw messages
+}
+
+func (e *MessageArea) ApplySelection() {
+	e.BoxType = ThickBoxType
+	e.Redraw()
+}
+
+func (e *MessageArea) SetSelection(boxType int) {
+	e.BoxType = boxType
+	e.ApplySelection()
+}
+
+func (e *MessageArea) Select() {
+	e.SetSelection(ThickBoxType)
+}
+
+func (e *MessageArea) Deselect() {
+	e.SetSelection(ThinBoxType)
+}
+
 func (m *MessageArea) ScrollTo(percent float32) {
 	m.ScrollPercent = percent
+	m.Redraw()
 }
 
 func (m *MessageArea) AddMessage(newMessage Message) {
 	m.Messages = append(m.Messages, newMessage)
+	m.Redraw()
 }
 
 type LargeInputArea struct {
@@ -164,7 +155,7 @@ func BoxChar(index string) error {
 func BoxCharLn(index string) error {
 	if char, exists := boxChars[index]; exists {
 		fmt.Print(string(char))
-		SetCursor(CursorRow+1, 1)
+		SetCursor(CursorRow+1, 0)
 	}
 	return errors.New("Index " + index + " not found")
 }
@@ -194,11 +185,18 @@ func BoxCharLnCond(index1 string, index2 string, condition bool) error {
 }
 
 func ClearArea(areaRow, areaCol, width, height int) {
+	var builder strings.Builder
+	spaceLine := strings.Repeat(" ", width)
 
-	for row := CursorRow; row < areaRow+height; row++ {
-		SetCursor(row, areaCol)
-		rmm.ClearLine()
+	for i := 0; i < height; i++ {
+		builder.WriteString(spaceLine)
+		if i < height-1 {
+			builder.WriteString("\n")
+		}
 	}
+
+	rmm.MoveCursor(areaRow, areaCol)
+	fmt.Print(builder.String())
 }
 
 func DrawBasicBox(width, height int, boxType int) {
@@ -210,19 +208,22 @@ func DrawBox(width, height int, boxType int, scrollPercent float32) {
 	boxRow, boxCol := CursorRow, CursorCol
 
 	BoxCharCond("--se", "--SE", isThin)
-	for col := CursorCol; col < boxCol+width-1; col++ {
+	for col := boxCol + 1; col < boxCol+width-1; col++ {
 		rmm.MoveCursor(CursorRow, col)
 		BoxCharCond("-w-e", "-W-E", isThin)
 	}
 	BoxCharLnCond("-ws-", "-WS-", isThin)
 
 	for row := CursorRow; row < boxRow+height-1; row++ {
+		rmm.MoveCursor(CursorRow, boxCol)
 		BoxCharCond("n-s-", "N-S-", isThin)
-		rmm.MoveCursor(CursorRow, width)
+		rmm.MoveCursor(CursorRow, boxCol+width-1)
+
+		scrollbarPos := boxRow + 1 + (int(float32(height) * scrollPercent))
 
 		// Moves cursor to a new line, either way
 		if scrollPercent != -1 {
-			if row == int(float32(height)*scrollPercent) {
+			if row == int(scrollbarPos) {
 				BoxCharLnCond("C", "D", isThin)
 			} else {
 				BoxCharLnCond("A", "B", isThin)
@@ -232,8 +233,10 @@ func DrawBox(width, height int, boxType int, scrollPercent float32) {
 		}
 	}
 
+	rmm.MoveCursor(CursorRow, boxCol)
 	BoxCharCond("n--e", "N--E", isThin)
-	for col := CursorCol; col < boxCol+width-1; col++ {
+
+	for col := boxCol + 1; col < boxCol+width-1; col++ {
 		rmm.MoveCursor(CursorRow, col)
 		BoxCharCond("-w-e", "-W-E", isThin)
 	}

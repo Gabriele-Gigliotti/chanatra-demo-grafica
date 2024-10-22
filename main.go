@@ -17,9 +17,9 @@ func main() {
 
 	document.NewDocument()
 
-	fmt.Print(" Connesso alla Stanza: DEV")
-
 	/*
+		fmt.Print(" Connesso alla Stanza: DEV")
+
 		elements.SetCursor(2, 1)
 		elements.DrawBox(int(rmm.TSize.Width), int(rmm.TSize.Height)-4, elements.ThinBoxType, 0.50)
 
@@ -33,14 +33,15 @@ func main() {
 		}
 	*/
 
-	ma := elements.NewMessageArea(2, 1, int(rmm.TSize.Width), int(rmm.TSize.Height))
+	ma := elements.NewMessageArea(1, 1, 10, 5)
+	elements.NewMessageArea(1, 11, 10, 5)
 
 	var a int
 
 	elements.SetCursor(5, 2)
 	rmm.ScanInt(&a)
 
-	ma.Redraw()
+	ma.Select()
 
 	elements.SetCursor(5, 2)
 	rmm.ScanInt(&a)
