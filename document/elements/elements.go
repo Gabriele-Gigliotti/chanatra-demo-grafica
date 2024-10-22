@@ -22,37 +22,19 @@ func (e *element) Redraw() {
 	//default does nothing
 }
 
-func (e *element) SetSelection(selection bool) error {
-	if e.ApplySelection == nil {
-		return errors.New("uninitialized ApplySelection function")
-	}
-
+func (e *element) SetSelection(selection bool) {
 	e.Selected = selection
 	e.ApplySelection()
-
-	return nil
 }
 
-func (e *element) Select() error {
-	if e.ApplySelection == nil {
-		return errors.New("uninitialized ApplySelection function")
-	}
-
+func (e *element) Select() {
 	e.Selected = true
 	e.ApplySelection()
-
-	return nil
 }
 
-func (e *element) Deselect() error {
-	if e.ApplySelection == nil {
-		return errors.New("uninitialized ApplySelection function")
-	}
-
+func (e *element) Deselect() {
 	e.Selected = false
 	e.ApplySelection()
-
-	return nil
 }
 
 type Message struct {
@@ -151,6 +133,7 @@ func BoxChar(index string) error {
 		fmt.Printf("%s", string(char))
 		return nil
 	}
+
 	return errors.New("Index " + index + " not found")
 }
 
@@ -159,6 +142,7 @@ func BoxCharLn(index string) error {
 		fmt.Print(string(char))
 		SetCursor(CursorRow+1, 1)
 	}
+
 	return errors.New("Index " + index + " not found")
 }
 
@@ -206,7 +190,7 @@ func DrawBox(width, height int, boxType int, scrollPercent float32) {
 	}
 	BoxCharLnCond("-ws-", "-WS-", isThin)
 
-	for row := 1; row < height; row++ {
+	for row := 1; row < height-1; row++ {
 		BoxCharCond("n-s-", "N-S-", isThin)
 		rmm.MoveCursor(CursorRow, width)
 		if scrollPercent != -1 {
@@ -227,6 +211,4 @@ func DrawBox(width, height int, boxType int, scrollPercent float32) {
 		BoxCharCond("-w-e", "-W-E", isThin)
 	}
 	BoxCharCond("nw--", "NW--", isThin)
-
-	return
 }

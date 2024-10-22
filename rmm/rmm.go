@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
+	"runtime"
 	"strconv"
 	"strings"
 	"syscall"
@@ -15,10 +17,15 @@ type TerminalSize struct {
 	Width  uint16
 }
 
-var TSize TerminalSize
+var (
+	TSize TerminalSize
+	OS    string
+)
 
 func init() {
 	InitTerminalSize()
+
+	OS = runtime.GOOS
 }
 
 func InitTerminalSize() error {
@@ -27,6 +34,7 @@ func InitTerminalSize() error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -34,13 +42,24 @@ func MoveCursor(row, col int) {
 	fmt.Printf("\033[%d;%dH", row, col)
 }
 
-func ClearTerm() {
-	fmt.Print("\033[2J\033[H") // Clear screen and move cursor to home position
+func ResetTerm() {
+	fmt.Print("\033[2J\033[H")
 }
 
-func ResetTerm() {
-	ClearTerm()
-	MoveCursor(0, 0)
+func OSClear() {
+	var cmd *exec.Cmd
+	switch runtime.GOOS {
+	case "linux", "darwin":
+		cmd = exec.Command("clear")
+	case "windows":
+		cmd = exec.Command("cmd", "/c", "cls")
+	default:
+		// tries to clear with ANSI
+		fmt.Print("\033[2J\033[H")
+		return
+	}
+	cmd.Stdout = os.Stdout
+	cmd.Run()
 }
 
 func ScanInt(target *int) error {
