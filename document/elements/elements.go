@@ -134,8 +134,6 @@ var boxChars = map[string]rune{
 	"N--E": 0x255A, // ╚
 	"NW--": 0x255D, // ╝
 
-	"dot": 0x00B7, //·
-
 	"A": 0x2591, //░
 	"B": 0x2592, //▒
 	"C": 0x2593, //▓
