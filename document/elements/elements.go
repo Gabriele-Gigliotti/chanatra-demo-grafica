@@ -55,7 +55,6 @@ func (e *MessageArea) Draw() {
 }
 
 func (e *MessageArea) ApplySelection() {
-	e.BoxType = ThickBoxType
 	e.Redraw()
 }
 
@@ -186,17 +185,16 @@ func BoxCharLnCond(index1 string, index2 string, condition bool) error {
 
 func ClearArea(areaRow, areaCol, width, height int) {
 	var builder strings.Builder
-	spaceLine := strings.Repeat(" ", width)
-
-	for i := 0; i < height; i++ {
-		builder.WriteString(spaceLine)
-		if i < height-1 {
-			builder.WriteString("\n")
-		}
-	}
+	builder.WriteString(strings.Repeat(" ", width))
+	str := builder.String()
 
 	rmm.MoveCursor(areaRow, areaCol)
-	fmt.Print(builder.String())
+	for i := 0; i < height; i++ {
+		fmt.Print(str)
+		if i < height-1 {
+			rmm.MoveCursor(areaRow+i, areaCol)
+		}
+	}
 }
 
 func DrawBasicBox(width, height int, boxType int) {

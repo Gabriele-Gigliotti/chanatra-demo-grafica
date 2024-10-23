@@ -34,17 +34,23 @@ func main() {
 	*/
 
 	ma := elements.NewMessageArea(1, 1, 10, 5)
-	elements.NewMessageArea(1, 11, 10, 5)
+	mb := elements.NewMessageArea(1, 11, 10, 5)
 
 	var a int
 
-	elements.SetCursor(5, 2)
-	rmm.ScanInt(&a)
+	for {
+		elements.SetCursor(11, 1)
+		rmm.ScanInt(&a)
 
-	ma.Select()
+		mb.Deselect()
+		ma.Select()
 
-	elements.SetCursor(5, 2)
-	rmm.ScanInt(&a)
+		elements.SetCursor(11, 1)
+		rmm.ScanInt(&a)
+
+		ma.Deselect()
+		mb.Select()
+	}
 
 }
 
