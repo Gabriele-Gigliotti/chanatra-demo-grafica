@@ -1,7 +1,7 @@
 package document
 
 import (
-	"drawino/rmm"
+	"drawino/lib/rmm"
 )
 
 func init() {

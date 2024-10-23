@@ -3,7 +3,7 @@ package main
 import (
 	"drawino/document"          // for document graphics and functionality
 	"drawino/document/elements" // middle management between documents and rmm
-	"drawino/rmm"               // for raw mode calculations (e.g. the cursor, the terminal)
+	"drawino/lib/rmm"           // for raw mode calculations (e.g. the cursor, the terminal)
 
 	"fmt"
 	"os"
@@ -36,17 +36,18 @@ func main() {
 	ma := elements.NewMessageArea(1, 1, 10, 5)
 	mb := elements.NewMessageArea(1, 11, 10, 5)
 
-	var a int
+	var a string
 
 	for {
 		elements.SetCursor(11, 1)
-		rmm.ScanInt(&a)
+		rmm.ScanStrCustom(&a, []rune{'\n', '\r'}, []rune{'\t'}, []rune{})
+		fmt.Print("\n", a)
 
 		mb.Deselect()
 		ma.Select()
 
 		elements.SetCursor(11, 1)
-		rmm.ScanInt(&a)
+		rmm.ScanStrCustom(&a, []rune{'\n', '\r'}, []rune{'\t'}, []rune{})
 
 		ma.Deselect()
 		mb.Select()

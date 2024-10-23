@@ -1,7 +1,7 @@
 package elements
 
 import (
-	"drawino/rmm"
+	"drawino/lib/rmm"
 	"errors"
 	"fmt"
 	"strings"

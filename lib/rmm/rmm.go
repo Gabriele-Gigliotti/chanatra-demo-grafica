@@ -1,6 +1,8 @@
 package rmm
 
 import (
+	"drawino/lib/logic"
+
 	"bufio"
 	"fmt"
 	"os"
@@ -66,28 +68,91 @@ func OSClear() {
 	cmd.Run()
 }
 
-func ScanInt(target *int) error {
-	ResetTerminalMode()
+// TODO: REDO
+func ScanInt(target interface{}) error {
+	var inputStr string
+	ScanStr(&inputStr)
 
-	fmt.Scanln(target)
+	if target == nil {
+		return nil
+	}
 
-	SetRawMode()
+	val, err := strconv.Atoi(inputStr)
+	if err != nil {
+		return fmt.Errorf("failed to parse '%s' as an integer: %v", inputStr, err)
+	}
+
+	if intPtr, ok := target.(*int); ok {
+		*intPtr = val
+	} else {
+		return fmt.Errorf("target is not an *int")
+	}
+
 	return nil
 }
 
+// TODO: REDO
 func ScanStr(target *string) error {
-	ResetTerminalMode()
-
+	var input strings.Builder
 	reader := bufio.NewReader(os.Stdin)
-	input, err := reader.ReadString('\n')
-	if err != nil {
-		return err
+
+	for {
+		b, err := reader.ReadByte()
+		if err != nil {
+			return err
+		}
+
+		if b == '\n' || b == '\r' {
+			break
+		}
+
+		input.WriteByte(b)
+		fmt.Print(string(b))
 	}
 
-	input = strings.TrimSuffix(input, "\n")
-	*target = input
+	*target = input.String()
+	return nil
+}
 
-	SetRawMode()
+func ScanStrCustom(target *string, send []rune, skip []rune, ignore []rune) error {
+
+	var input strings.Builder
+	reader := bufio.NewReader(os.Stdin)
+	userCursor := 0
+
+	for {
+		b, err := reader.ReadByte()
+		if err != nil {
+			return err
+		}
+
+		if logic.ItemExists(ignore, rune(b)) {
+			continue
+		} else if logic.ItemExists(send, rune(b)) {
+			break
+		}
+
+		if b == '\x7f' { // Backspace key
+			if userCursor > 0 {
+				inputString := input.String()
+				newString := inputString[:userCursor-1] + inputString[userCursor:]
+				input.Reset()
+				input.WriteString(newString)
+
+				userCursor--
+			}
+			fmt.Print("\033[1D \033[1D")
+			continue
+		}
+
+		// TODO: Logic for the arrow keys
+
+		fmt.Print(string(b))
+		input.WriteByte(b)
+		userCursor++
+	}
+
+	*target = input.String()
 	return nil
 }
 
