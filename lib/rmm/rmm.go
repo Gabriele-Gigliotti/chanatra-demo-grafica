@@ -118,7 +118,9 @@ func ScanStrCustom(target *string, send []rune, skip []rune, ignore []rune) erro
 
 	var input strings.Builder
 	reader := bufio.NewReader(os.Stdin)
+
 	userCursor := 0
+	inputLength := 0
 
 	for {
 		b, err := reader.ReadByte()
@@ -132,7 +134,30 @@ func ScanStrCustom(target *string, send []rune, skip []rune, ignore []rune) erro
 			break
 		}
 
-		if b == '\x7f' { // Backspace key
+		// Arrow Keys
+		if b == '\x1b' {
+			next1, _ := reader.ReadByte()
+			next2, _ := reader.ReadByte()
+
+			if next1 == '[' {
+				if next2 == 'C' && userCursor < inputLength {
+					// Right
+					fmt.Print("\x1b[C")
+					userCursor++
+				} else if next2 == 'D' && userCursor > 0 {
+					// Left
+					fmt.Print("\x1b[D")
+					userCursor--
+				}
+				continue
+			} else {
+				reader.UnreadByte()
+				reader.UnreadByte()
+			}
+		}
+
+		// Backspace key
+		if b == '\x7f' {
 			if userCursor > 0 {
 				inputString := input.String()
 				newString := inputString[:userCursor-1] + inputString[userCursor:]
@@ -140,16 +165,16 @@ func ScanStrCustom(target *string, send []rune, skip []rune, ignore []rune) erro
 				input.WriteString(newString)
 
 				userCursor--
+				inputLength--
 			}
 			fmt.Print("\033[1D \033[1D")
 			continue
 		}
 
-		// TODO: Logic for the arrow keys
-
 		fmt.Print(string(b))
 		input.WriteByte(b)
 		userCursor++
+		inputLength++
 	}
 
 	*target = input.String()
