@@ -7,6 +7,12 @@ import (
 	"strings"
 )
 
+type Selectable interface {
+	ApplySelection()
+	Select()
+	Deselect()
+}
+
 type element struct {
 	Row     int
 	Col     int
@@ -58,17 +64,16 @@ func (e *MessageArea) ApplySelection() {
 	e.Redraw()
 }
 
-func (e *MessageArea) SetSelection(boxType int) {
-	e.BoxType = boxType
+func (e *MessageArea) Select() *MessageArea {
+	e.BoxType = ThickBoxType
 	e.ApplySelection()
+	return e
 }
 
-func (e *MessageArea) Select() {
-	e.SetSelection(ThickBoxType)
-}
-
-func (e *MessageArea) Deselect() {
-	e.SetSelection(ThinBoxType)
+func (e *MessageArea) Deselect() *MessageArea {
+	e.BoxType = ThinBoxType
+	e.ApplySelection()
+	return e
 }
 
 func (m *MessageArea) ScrollTo(percent float32) {
@@ -86,17 +91,38 @@ type LargeInputArea struct {
 }
 
 func NewLargeInputArea(row, col, width, height int) *LargeInputArea {
-	return &LargeInputArea{
-		//TODO
+	lia := &LargeInputArea{
+		element: element{
+			Row:    row,
+			Col:    col,
+			Width:  width,
+			Height: height,
+		},
 	}
-}
 
-func (e *LargeInputArea) ApplySelection() {
-	//default does nothing
+	lia.Draw()
+	return lia
 }
 
 func (e *LargeInputArea) Draw() {
-	//default does nothing
+	SetCursor(e.Row, e.Col)
+	DrawBox(e.Width, e.Height, e.BoxType, -1)
+}
+
+func (e *LargeInputArea) ApplySelection() {
+	e.Redraw()
+}
+
+func (e *LargeInputArea) Select() *LargeInputArea {
+	e.BoxType = ThickBoxType
+	e.ApplySelection()
+	return e
+}
+
+func (e *LargeInputArea) Deselect() *LargeInputArea {
+	e.BoxType = ThinBoxType
+	e.ApplySelection()
+	return e
 }
 
 func (e *LargeInputArea) Redraw() {
