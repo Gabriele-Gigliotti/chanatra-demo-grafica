@@ -30,3 +30,8 @@ func Select(s elements.Selectable) {
 	CurrentSelected = s
 	s.Select()
 }
+
+func Deselect(s elements.Selectable) {
+	CurrentSelected = nil
+	s.Deselect()
+}
