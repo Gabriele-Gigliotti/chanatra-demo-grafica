@@ -9,8 +9,8 @@ import (
 
 type Selectable interface {
 	ApplySelection()
-	Select()
-	Deselect()
+	Select() Selectable
+	Deselect() Selectable
 }
 
 type element struct {
@@ -64,13 +64,13 @@ func (e *MessageArea) ApplySelection() {
 	e.Redraw()
 }
 
-func (e *MessageArea) Select() *MessageArea {
+func (e *MessageArea) Select() Selectable {
 	e.BoxType = ThickBoxType
 	e.ApplySelection()
 	return e
 }
 
-func (e *MessageArea) Deselect() *MessageArea {
+func (e *MessageArea) Deselect() Selectable {
 	e.BoxType = ThinBoxType
 	e.ApplySelection()
 	return e
@@ -113,20 +113,21 @@ func (e *LargeInputArea) ApplySelection() {
 	e.Redraw()
 }
 
-func (e *LargeInputArea) Select() *LargeInputArea {
+func (e *LargeInputArea) Select() Selectable {
 	e.BoxType = ThickBoxType
 	e.ApplySelection()
 	return e
 }
 
-func (e *LargeInputArea) Deselect() *LargeInputArea {
+func (e *LargeInputArea) Deselect() Selectable {
 	e.BoxType = ThinBoxType
 	e.ApplySelection()
 	return e
 }
 
 func (e *LargeInputArea) Redraw() {
-	//default does nothing
+	ClearArea(e.Row, e.Col, e.Width, e.Height)
+	e.Draw()
 }
 
 // ------- Functions ------- //

@@ -14,10 +14,11 @@ func LoadDocument() {
 	elements.NewMessageArea(2, 1, int(rmm.TSize.Width), int(rmm.TSize.Height)-4)
 
 	lia := elements.NewLargeInputArea(int(rmm.TSize.Height)-2, 1, int(rmm.TSize.Width), 3)
-	lia.Select()
+	Select(lia)
 
-	var s string
-	fmt.Scan(&s)
+	elements.SetCursor(int(rmm.TSize.Height)-1, 2)
+	var a string
+	fmt.Scan(&a)
 }
 
 func NewDocument() {
