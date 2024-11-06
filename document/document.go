@@ -3,7 +3,6 @@ package document
 import (
 	"drawino/document/elements" // middle management between documents and rmm
 	"drawino/lib/rmm"
-	"fmt"
 )
 
 var (
@@ -19,12 +18,16 @@ func LoadDocument() {
 
 	elements.SetCursor(int(rmm.TSize.Height)-1, 2)
 	var a string
-	fmt.Scan(&a)
+	rmm.ScanStrCustom(&a, nil, nil, nil)
 }
 
 func NewDocument() {
 	rmm.SetRawMode()
 	rmm.ResetTerm()
+	ElementList = map[string]elements.Selectable{
+		"ma": nil,
+		"ia": nil,
+	}
 	LoadDocument()
 }
 

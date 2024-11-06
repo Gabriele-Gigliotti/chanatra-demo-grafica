@@ -123,43 +123,44 @@ func ScanStrCustom(target *string, send []rune, skip []rune, ignore []rune) erro
 	inputLength := 0
 
 	for {
-		b, err := reader.ReadByte()
+		r, _, err := reader.ReadRune()
 		if err != nil {
 			return err
 		}
 
-		if logic.ItemExists(ignore, rune(b)) {
+		if logic.ItemExists(ignore, r) {
 			continue
-		} else if logic.ItemExists(send, rune(b)) {
+		} else if logic.ItemExists(send, r) {
 			break
 		}
 
 		// Arrow Keys
-		if b == '\x1b' {
-			next1, _ := reader.ReadByte()
-			next2, _ := reader.ReadByte()
+		if r == '\x1b' {
+			next1, _, _ := reader.ReadRune()
+			next2, _, _ := reader.ReadRune()
 
 			if next1 == '[' {
 				if next2 == 'C' && userCursor < inputLength {
-					// Right
+					// Right arrow key
 					fmt.Print("\x1b[C")
 					userCursor++
 				} else if next2 == 'D' && userCursor > 0 {
-					// Left
+					// Left arrow key
 					fmt.Print("\x1b[D")
 					userCursor--
 				}
 				continue
 			} else {
-				reader.UnreadByte()
-				reader.UnreadByte()
+				reader.UnreadRune()
+				reader.UnreadRune()
 			}
 		}
 
 		// Backspace key
-		if b == '\x7f' {
+		if r == '\x7f' {
 			if userCursor > 0 {
 				inputString := input.String()
+				// Remove the character before the cursor
 				newString := inputString[:userCursor-1] + inputString[userCursor:]
 				input.Reset()
 				input.WriteString(newString)
@@ -171,8 +172,8 @@ func ScanStrCustom(target *string, send []rune, skip []rune, ignore []rune) erro
 			continue
 		}
 
-		fmt.Print(string(b))
-		input.WriteByte(b)
+		fmt.Printf("%c", r)
+		input.WriteRune(r)
 		userCursor++
 		inputLength++
 	}
