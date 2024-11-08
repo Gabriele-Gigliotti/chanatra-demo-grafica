@@ -114,7 +114,7 @@ func ScanStr(target *string) error {
 	return nil
 }
 
-func ScanStrCustom(target *string, send []rune, skip []rune, ignore []rune) error {
+func ScanStrCustom(target *string, send []rune, ignore []rune) error {
 	var cRow, cCol, _ = GetCursorPosition()
 
 	var input strings.Builder

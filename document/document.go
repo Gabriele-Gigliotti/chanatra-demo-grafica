@@ -18,7 +18,7 @@ func LoadDocument() {
 
 	elements.SetCursor(int(rmm.TSize.Height)-1, 2)
 	var a string
-	rmm.ScanStrCustom(&a, nil, nil, nil)
+	rmm.ScanStrCustom(&a, nil, nil)
 }
 
 func NewDocument() {
