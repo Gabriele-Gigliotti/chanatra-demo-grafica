@@ -115,6 +115,7 @@ func ScanStr(target *string) error {
 }
 
 func ScanStrCustom(target *string, send []rune, skip []rune, ignore []rune) error {
+	var cRow, cCol, _ = GetCursorPosition()
 
 	var input strings.Builder
 	reader := bufio.NewReader(os.Stdin)
@@ -128,10 +129,11 @@ func ScanStrCustom(target *string, send []rune, skip []rune, ignore []rune) erro
 			return err
 		}
 
+		if r == '\n' || r == '\r' || logic.ItemExists(send, r) {
+			break
+		}
 		if logic.ItemExists(ignore, r) {
 			continue
-		} else if logic.ItemExists(send, r) {
-			break
 		}
 
 		// Arrow Keys
@@ -158,17 +160,20 @@ func ScanStrCustom(target *string, send []rune, skip []rune, ignore []rune) erro
 
 		// Backspace key
 		if r == '\x7f' {
+			var newString string
 			if userCursor > 0 {
 				inputString := input.String()
 				// Remove the character before the cursor
-				newString := inputString[:userCursor-1] + inputString[userCursor:]
+				newString = inputString[:userCursor-1] + inputString[userCursor:]
 				input.Reset()
 				input.WriteString(newString)
 
 				userCursor--
 				inputLength--
 			}
-			fmt.Print("\033[1D \033[1D")
+			//fmt.Print("\033[1D \033[1D")
+			MoveCursor(cRow, cCol)
+			fmt.Print(newString)
 			continue
 		}
 
@@ -179,6 +184,7 @@ func ScanStrCustom(target *string, send []rune, skip []rune, ignore []rune) erro
 	}
 
 	*target = input.String()
+	MoveCursor(cRow, cCol)
 	return nil
 }
 
