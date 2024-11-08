@@ -134,11 +134,14 @@ func ScanStrCustom(target *string, send []rune, ignore []rune) error {
 		if r == '\n' || r == '\r' || logic.ItemExists(send, r) {
 			break
 		}
+
+		// Does not automatically skip the tabulation because there's no *functional* error,
+		// even if it displays really funky
 		if logic.ItemExists(ignore, r) {
 			continue
 		}
 
-		// Arrow Keys
+		// Arrow & Delete Keys
 		if r == '\x1b' {
 			isScannable = false
 			next1, _, _ := reader.ReadRune()
@@ -149,12 +152,35 @@ func ScanStrCustom(target *string, send []rune, ignore []rune) error {
 					// Right arrow key
 					fmt.Print("\x1b[C")
 					userCursor++
+					continue
+
 				} else if next2 == 'D' && userCursor > 0 {
 					// Left arrow key
 					fmt.Print("\x1b[D")
 					userCursor--
+					continue
+
+				} else if next2 == '3' {
+					next3, _, _ := reader.ReadRune()
+					if next3 == '~' {
+						var newString string
+						if userCursor < inputLength {
+							inputString := input.String()
+							// Remove the character after the cursor
+							newString = inputString[:userCursor] + inputString[userCursor+1:]
+							input.Reset()
+							input.WriteString(newString)
+
+							inputLength--
+
+							MoveCursor(cRow, cCol+inputLength)
+							fmt.Print(" ")
+						}
+					} else {
+						reader.UnreadRune()
+					}
 				}
-				continue
+
 			} else {
 				reader.UnreadRune()
 				reader.UnreadRune()
@@ -181,7 +207,6 @@ func ScanStrCustom(target *string, send []rune, ignore []rune) error {
 		}
 
 		if isScannable {
-			// Insert character at cursor position
 			inputString := input.String()
 			newString := inputString[:userCursor] + string(r) + inputString[userCursor:]
 			input.Reset()
@@ -190,7 +215,6 @@ func ScanStrCustom(target *string, send []rune, ignore []rune) error {
 			inputLength++
 		}
 
-		// Redraw the input string with cursor update
 		MoveCursor(cRow, cCol)
 		fmt.Print(input.String())
 		MoveCursor(cRow, cCol+userCursor)
