@@ -3,6 +3,7 @@ package document
 import (
 	"drawino/document/elements" // middle management between documents and rmm
 	"drawino/lib/rmm"
+	"fmt"
 )
 
 var (
@@ -19,6 +20,10 @@ func LoadDocument() {
 	elements.SetCursor(int(rmm.TSize.Height)-1, 2)
 	var a string
 	rmm.ScanStrCustom(&a, nil, nil)
+
+	rmm.ResetTerm()
+	fmt.Print(a)
+	fmt.Scan(&a)
 }
 
 func NewDocument() {

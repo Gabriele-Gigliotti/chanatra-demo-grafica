@@ -122,8 +122,10 @@ func ScanStrCustom(target *string, send []rune, ignore []rune) error {
 
 	userCursor := 0
 	inputLength := 0
+	var isScannable bool
 
 	for {
+		isScannable = true
 		r, _, err := reader.ReadRune()
 		if err != nil {
 			return err
@@ -138,6 +140,7 @@ func ScanStrCustom(target *string, send []rune, ignore []rune) error {
 
 		// Arrow Keys
 		if r == '\x1b' {
+			isScannable = false
 			next1, _, _ := reader.ReadRune()
 			next2, _, _ := reader.ReadRune()
 
@@ -160,6 +163,7 @@ func ScanStrCustom(target *string, send []rune, ignore []rune) error {
 
 		// Backspace key
 		if r == '\x7f' {
+			isScannable = false
 			var newString string
 			if userCursor > 0 {
 				inputString := input.String()
@@ -170,17 +174,26 @@ func ScanStrCustom(target *string, send []rune, ignore []rune) error {
 
 				userCursor--
 				inputLength--
+
+				MoveCursor(cRow, cCol+inputLength)
+				fmt.Print(" ")
 			}
-			//fmt.Print("\033[1D \033[1D")
-			MoveCursor(cRow, cCol)
-			fmt.Print(newString)
-			continue
 		}
 
-		fmt.Printf("%c", r)
-		input.WriteRune(r)
-		userCursor++
-		inputLength++
+		if isScannable {
+			// Insert character at cursor position
+			inputString := input.String()
+			newString := inputString[:userCursor] + string(r) + inputString[userCursor:]
+			input.Reset()
+			input.WriteString(newString)
+			userCursor++
+			inputLength++
+		}
+
+		// Redraw the input string with cursor update
+		MoveCursor(cRow, cCol)
+		fmt.Print(input.String())
+		MoveCursor(cRow, cCol+userCursor)
 	}
 
 	*target = input.String()
