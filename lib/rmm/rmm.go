@@ -68,50 +68,29 @@ func OSClear() {
 	cmd.Run()
 }
 
-// TODO: REDO
 func ScanInt(target interface{}) error {
-	var inputStr string
-	ScanStr(&inputStr)
-
-	if target == nil {
-		return nil
-	}
-
-	val, err := strconv.Atoi(inputStr)
+	var a string
+	err := ScanStr(&a)
 	if err != nil {
-		return fmt.Errorf("failed to parse '%s' as an integer: %v", inputStr, err)
+		return err
 	}
 
-	if intPtr, ok := target.(*int); ok {
-		*intPtr = val
-	} else {
-		return fmt.Errorf("target is not an *int")
+	switch v := target.(type) {
+	case *int:
+		parsedInt, err := strconv.Atoi(a)
+		if err != nil {
+			return fmt.Errorf("failed to parse integer: %v", err)
+		}
+		*v = parsedInt
+	default:
+		return fmt.Errorf("invalid target type for ScanInt")
 	}
 
 	return nil
 }
 
-// TODO: REDO
 func ScanStr(target *string) error {
-	var input strings.Builder
-	reader := bufio.NewReader(os.Stdin)
-
-	for {
-		b, err := reader.ReadByte()
-		if err != nil {
-			return err
-		}
-
-		if b == '\n' || b == '\r' {
-			break
-		}
-
-		input.WriteByte(b)
-		fmt.Print(string(b))
-	}
-
-	*target = input.String()
-	return nil
+	return ScanStrCustom(target, nil, []rune{'\t'})
 }
 
 func ScanStrCustom(target *string, send []rune, ignore []rune) error {
