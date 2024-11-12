@@ -24,7 +24,7 @@ func LoadDocument() {
 	rmm.ResetTerm()
 	fmt.Println(a)
 	for i := 0; i < len(a); i++ {
-		fmt.Printf("%d: %08b %d\t%c\n", i, a[i], a[i], a[i])
+		fmt.Printf("%d:\t%08b\t%d\t%c\n", i, a[i], a[i], a[i])
 	}
 	fmt.Scan(&a)
 }
