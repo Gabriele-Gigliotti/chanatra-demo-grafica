@@ -1,8 +1,6 @@
 package rmm
 
 import (
-	"drawino/lib/logic"
-
 	"bufio"
 	"fmt"
 	"os"
@@ -94,9 +92,9 @@ func ScanStr(target *string) error {
 }
 
 func ScanStrCustom(target *string, send []rune, ignore []rune) error {
-	var cRow, cCol, _ = GetCursorPosition()
 
-	var input strings.Builder
+	var cRow, cCol, _ = GetCursorPosition()
+	var input []rune
 	reader := bufio.NewReader(os.Stdin)
 
 	userCursor := 0
@@ -110,98 +108,81 @@ func ScanStrCustom(target *string, send []rune, ignore []rune) error {
 			return err
 		}
 
-		if r == '\n' || r == '\r' || logic.ItemExists(send, r) {
+		if r == '\n' || r == '\r' || itemExists(send, r) {
 			break
 		}
 
-		// Does not automatically skip the tabulation because there's no *functional* error,
-		// even if it displays really funky
-		if logic.ItemExists(ignore, r) {
+		if itemExists(ignore, r) {
 			continue
 		}
 
-		// Arrow & Delete Keys
+		// Arrow keys and delete
 		if r == '\x1b' {
 			isScannable = false
 			next1, _, _ := reader.ReadRune()
 			next2, _, _ := reader.ReadRune()
 
 			if next1 == '[' {
-				if next2 == 'C' && userCursor < inputLength {
-					// Right arrow key
-					fmt.Print("\x1b[C")
-					userCursor++
-					continue
-
-				} else if next2 == 'D' && userCursor > 0 {
-					// Left arrow key
-					fmt.Print("\x1b[D")
-					userCursor--
-					continue
-
-				} else if next2 == '3' {
+				switch next2 {
+				case 'C': // Right
+					if userCursor < inputLength {
+						fmt.Print("\x1b[C")
+						userCursor++
+					}
+				case 'D': // Left
+					if userCursor > 0 {
+						fmt.Print("\x1b[D")
+						userCursor--
+					}
+				case '3': // Delete key (ESC [3~ sequence)
 					next3, _, _ := reader.ReadRune()
-					if next3 == '~' {
-						var newString string
-						if userCursor < inputLength {
-							inputString := input.String()
-							// Remove the character after the cursor
-							newString = inputString[:userCursor] + inputString[userCursor+1:]
-							input.Reset()
-							input.WriteString(newString)
+					if next3 == '~' && userCursor < inputLength {
+						input = append(input[:userCursor], input[userCursor+1:]...)
+						inputLength--
 
-							inputLength--
-
-							MoveCursor(cRow, cCol+inputLength)
-							fmt.Print(" ")
-						}
-					} else {
-						reader.UnreadRune()
+						MoveCursor(cRow, cCol)
+						fmt.Print(string(input) + " ")
 					}
 				}
-
-			} else {
-				reader.UnreadRune()
-				reader.UnreadRune()
 			}
 		}
 
-		// Backspace key
+		// Backspace
 		if r == '\x7f' {
 			isScannable = false
-			var newString string
 			if userCursor > 0 {
-				inputString := input.String()
-				// Remove the character before the cursor
-				newString = inputString[:userCursor-1] + inputString[userCursor:]
-				input.Reset()
-				input.WriteString(newString)
-
+				input = append(input[:userCursor-1], input[userCursor:]...)
 				userCursor--
 				inputLength--
 
-				MoveCursor(cRow, cCol+inputLength)
-				fmt.Print(" ")
+				MoveCursor(cRow, cCol)
+				fmt.Print(string(input) + " ")
 			}
 		}
 
 		if isScannable {
-			inputString := input.String()
-			newString := inputString[:userCursor] + string(r) + inputString[userCursor:]
-			input.Reset()
-			input.WriteString(newString)
+			input = append(input[:userCursor], append([]rune{r}, input[userCursor:]...)...)
 			userCursor++
 			inputLength++
 		}
 
 		MoveCursor(cRow, cCol)
-		fmt.Print(input.String())
+		fmt.Print(string(input))
 		MoveCursor(cRow, cCol+userCursor)
 	}
 
-	*target = input.String()
+	*target = string(input) // Set target to the final input string
 	MoveCursor(cRow, cCol)
 	return nil
+}
+
+func itemExists(list []rune, item rune) bool {
+	for _, v := range list {
+		if v == item {
+			return true
+		}
+	}
+	return false
 }
 
 func GetCursorPosition() (int, int, error) {

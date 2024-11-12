@@ -22,7 +22,10 @@ func LoadDocument() {
 	rmm.ScanStr(&a)
 
 	rmm.ResetTerm()
-	fmt.Print(a)
+	fmt.Println(a)
+	for i := 0; i < len(a); i++ {
+		fmt.Printf("%d: %08b %d\t%c\n", i, a[i], a[i], a[i])
+	}
 	fmt.Scan(&a)
 }
 
