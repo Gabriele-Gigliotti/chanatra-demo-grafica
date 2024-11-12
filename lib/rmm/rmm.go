@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"unicode"
 	"unsafe"
 )
 
@@ -168,12 +169,27 @@ func ScanStrCustom(target *string, send []rune, ignore []rune) error {
 
 		MoveCursor(cRow, cCol)
 		fmt.Print(string(input))
-		MoveCursor(cRow, cCol+userCursor)
+		MoveCursor(cRow, cCol+calculateVisualCursor(input, userCursor))
 	}
 
 	*target = string(input) // Set target to the final input string
 	MoveCursor(cRow, cCol)
 	return nil
+}
+
+func charWidth(r rune) int {
+	if /*unicode.Is(unicode.CJKUnifiedIdeographs, r) ||*/ unicode.Is(unicode.Hiragana, r) || unicode.Is(unicode.Katakana, r) || unicode.Is(unicode.Hangul, r) {
+		return 2
+	}
+	return 1
+}
+
+func calculateVisualCursor(input []rune, cursorPos int) int {
+	visualPos := 0
+	for i := 0; i < cursorPos; i++ {
+		visualPos += charWidth(input[i])
+	}
+	return visualPos
 }
 
 func itemExists(list []rune, item rune) bool {
