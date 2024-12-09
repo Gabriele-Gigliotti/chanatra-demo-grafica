@@ -18,6 +18,14 @@ type TerminalSize struct {
 	Width  uint16
 }
 
+type ScanStrSettings struct {
+	send   []rune
+	ignore []rune
+
+	deselect []rune
+	saved    []rune
+}
+
 var (
 	TSize TerminalSize
 	OS    string
@@ -67,35 +75,43 @@ func OSClear() {
 	cmd.Run()
 }
 
-func ScanInt(target interface{}) error {
+func ScanInt(target interface{}) (int, error) {
 	var a string
-	err := ScanStr(&a)
+	status, err := ScanStr(&a)
 	if err != nil {
-		return err
+		return status, err
 	}
 
 	switch v := target.(type) {
 	case *int:
 		parsedInt, err := strconv.Atoi(a)
 		if err != nil {
-			return fmt.Errorf("failed to parse integer: %v", err)
+			return status, fmt.Errorf("failed to parse integer: %v", err)
 		}
 		*v = parsedInt
 	default:
-		return fmt.Errorf("invalid target type for ScanInt")
+		return status, fmt.Errorf("invalid target type for ScanInt")
 	}
 
-	return nil
+	return status, nil
 }
 
-func ScanStr(target *string) error {
-	return ScanStrCustom(target, nil, []rune{'\t'})
+func ScanStr(target *string) (int, error) {
+	return ScanStrCustom(target, ScanStrSettings{nil, nil, []rune{'\t'}, nil})
 }
 
-func ScanStrCustom(target *string, send []rune, ignore []rune) error {
+/*
+ * STATUS
+ * 0 = sent
+ * 1 = deselected
+ */
+func ScanStrCustom(target *string, settings ScanStrSettings) (status int, err error) {
+	send := settings.send
+	ignore := settings.ignore
+	deselect := settings.deselect
+	var input []rune = settings.saved
 
 	var cRow, cCol, _ = GetCursorPosition()
-	var input []rune
 	reader := bufio.NewReader(os.Stdin)
 
 	userCursor := 0
@@ -104,9 +120,10 @@ func ScanStrCustom(target *string, send []rune, ignore []rune) error {
 
 	for {
 		isScannable = true
-		r, _, err := reader.ReadRune()
+		var r rune
+		r, _, err = reader.ReadRune()
 		if err != nil {
-			return err
+			return
 		}
 
 		if r == '\n' || r == '\r' || itemExists(send, r) {
@@ -115,6 +132,12 @@ func ScanStrCustom(target *string, send []rune, ignore []rune) error {
 
 		if itemExists(ignore, r) {
 			continue
+		}
+
+		if itemExists(deselect, r) {
+			*target = string(input)
+			status = 1
+			return
 		}
 
 		// Arrow keys and delete
@@ -174,7 +197,11 @@ func ScanStrCustom(target *string, send []rune, ignore []rune) error {
 
 	*target = string(input) // Set target to the final input string
 	MoveCursor(cRow, cCol)
-	return nil
+	for i := 0; i < len(string(input)); i++ {
+		fmt.Print(" ")
+	}
+	MoveCursor(cRow, cCol)
+	return
 }
 
 func charWidth(r rune) int {

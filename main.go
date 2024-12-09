@@ -47,5 +47,5 @@ func gracefulInterrupt() {
 func gracefulStop() {
 	rmm.OSClear()
 	rmm.ResetTerminalMode()
-	fmt.Println("Chanatra was closed successfully.")
+	fmt.Println("Chanatra was closed safely.")
 }
