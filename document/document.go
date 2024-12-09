@@ -18,24 +18,25 @@ func LoadDocument() {
 	}
 	ElementList["ma"] = elements.NewMessageArea(2, 1, int(rmm.TSize.Width), int(rmm.TSize.Height)-4)
 	ElementList["ia"] = elements.NewLargeInputArea(int(rmm.TSize.Height)-2, 1, int(rmm.TSize.Width), 3)
-
-	Select(ElementList["ia"])
-
-	elements.SetCursor(int(rmm.TSize.Height)-1, 2)
-	var a string
-	status, _ := rmm.ScanStr(&a)
-
-	rmm.ResetTerm()
-	fmt.Println(a)
-	fmt.Println(status)
-
-	fmt.Scan(&a)
 }
 
 func NewDocument() {
 	rmm.SetRawMode()
 	rmm.ResetTerm()
 	LoadDocument()
+	for _, v := range ElementList {
+		v.Start()
+	}
+
+	for {
+		for _, v := range ElementList {
+			v.Select()
+			v.Deselect()
+		}
+	}
+
+	var a string
+	fmt.Scan(&a)
 }
 
 func Select(s elements.Selectable) {

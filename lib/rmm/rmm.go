@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"unicode"
 	"unsafe"
@@ -23,12 +24,13 @@ type ScanStrSettings struct {
 	ignore []rune
 
 	deselect []rune
-	saved    []rune
+	saved    string
 }
 
 var (
 	TSize TerminalSize
 	OS    string
+	mu    sync.Mutex
 )
 
 func init() {
@@ -75,6 +77,27 @@ func OSClear() {
 	cmd.Run()
 }
 
+func MuLock() {
+	mu.Lock()
+}
+func MuUnLock() {
+	mu.Unlock()
+}
+
+func MuPrint(row, col int, a ...any) {
+	mu.Lock()
+	MoveCursor(row, col)
+	fmt.Print(a...)
+	mu.Unlock()
+}
+
+func MuPrintf(row, col int, format string, a ...any) {
+	mu.Lock()
+	MoveCursor(row, col)
+	fmt.Printf(format, a...)
+	mu.Unlock()
+}
+
 func ScanInt(target interface{}) (int, error) {
 	var a string
 	status, err := ScanStr(&a)
@@ -96,8 +119,23 @@ func ScanInt(target interface{}) (int, error) {
 	return status, nil
 }
 
+func ScanTab() {
+	reader := bufio.NewReader(os.Stdin)
+	for {
+		r, _, _ := reader.ReadRune()
+		if r == '\t' {
+			return
+		}
+	}
+
+}
+
 func ScanStr(target *string) (int, error) {
-	return ScanStrCustom(target, ScanStrSettings{nil, nil, []rune{'\t'}, nil})
+	return ScanStrCustom(target, ScanStrSettings{nil, nil, []rune{'\t'}, ""})
+}
+
+func ScanOrAppendStr(target *string, saved string) (int, error) {
+	return ScanStrCustom(target, ScanStrSettings{nil, nil, []rune{'\t'}, saved})
 }
 
 /*
@@ -109,13 +147,13 @@ func ScanStrCustom(target *string, settings ScanStrSettings) (status int, err er
 	send := settings.send
 	ignore := settings.ignore
 	deselect := settings.deselect
-	var input []rune = settings.saved
+	input := []rune(settings.saved)
 
 	var cRow, cCol, _ = GetCursorPosition()
 	reader := bufio.NewReader(os.Stdin)
 
-	userCursor := 0
-	inputLength := 0
+	userCursor := len(input)
+	inputLength := len(input)
 	var isScannable bool
 
 	for {
@@ -276,6 +314,7 @@ func SetRawMode() {
 	termios.Lflag &^= syscall.ECHO | syscall.ICANON
 
 	_, _, _ = syscall.Syscall6(syscall.SYS_IOCTL, fd, syscall.TCSETS, uintptr(unsafe.Pointer(termios)), 0, 0, 0)
+	fmt.Print("\033[?25l")
 }
 
 func ResetTerminalMode() {
@@ -287,4 +326,5 @@ func ResetTerminalMode() {
 	termios.Lflag |= syscall.ECHO | syscall.ICANON
 
 	_, _, _ = syscall.Syscall6(syscall.SYS_IOCTL, fd, syscall.TCSETS, uintptr(unsafe.Pointer(termios)), 0, 0, 0)
+	defer fmt.Print("\033[?25h")
 }

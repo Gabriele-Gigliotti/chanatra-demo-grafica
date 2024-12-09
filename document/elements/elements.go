@@ -5,12 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 )
 
 type Selectable interface {
 	ApplySelection()
 	Select() Selectable
 	Deselect() Selectable
+	Start()
 }
 
 type element struct {
@@ -62,6 +64,7 @@ func (e *MessageArea) Draw() {
 
 func (e *MessageArea) ApplySelection() {
 	e.Redraw()
+	rmm.ScanTab()
 }
 
 func (e *MessageArea) Select() Selectable {
@@ -72,7 +75,7 @@ func (e *MessageArea) Select() Selectable {
 
 func (e *MessageArea) Deselect() Selectable {
 	e.BoxType = ThinBoxType
-	e.ApplySelection()
+	e.Redraw()
 	return e
 }
 
@@ -86,8 +89,29 @@ func (m *MessageArea) AddMessage(newMessage Message) {
 	m.Redraw()
 }
 
+func (e *MessageArea) Start() {
+	go e.doStuff()
+}
+
+func (e *MessageArea) doStuff() {
+	for {
+		rmm.MuPrint(e.Row+1, e.Col+1, "|")
+		time.Sleep(100 * time.Millisecond)
+
+		rmm.MuPrint(e.Row+1, e.Col+1, "/")
+		time.Sleep(100 * time.Millisecond)
+
+		rmm.MuPrint(e.Row+1, e.Col+1, "-")
+		time.Sleep(100 * time.Millisecond)
+
+		rmm.MuPrint(e.Row+1, e.Col+1, "\\")
+		time.Sleep(100 * time.Millisecond)
+	}
+}
+
 type LargeInputArea struct {
 	element
+	SavedStr string
 }
 
 func NewLargeInputArea(row, col, width, height int) *LargeInputArea {
@@ -98,10 +122,15 @@ func NewLargeInputArea(row, col, width, height int) *LargeInputArea {
 			Width:  width,
 			Height: height,
 		},
+		SavedStr: "",
 	}
 
 	lia.Draw()
 	return lia
+}
+
+func (e *LargeInputArea) Start() {
+	// Do nothing
 }
 
 func (e *LargeInputArea) Draw() {
@@ -111,6 +140,20 @@ func (e *LargeInputArea) Draw() {
 
 func (e *LargeInputArea) ApplySelection() {
 	e.Redraw()
+	var status int
+	var a string
+
+	// Repeat input if sent
+	for status == 0 {
+		SetCursor(int(rmm.TSize.Height)-1, 2)
+
+		status, _ = rmm.ScanOrAppendStr(&a, e.SavedStr)
+		e.SavedStr = ""
+	}
+
+	// If deselected, remember input
+	e.SavedStr = a
+	e.Deselect()
 }
 
 func (e *LargeInputArea) Select() Selectable {
@@ -121,12 +164,12 @@ func (e *LargeInputArea) Select() Selectable {
 
 func (e *LargeInputArea) Deselect() Selectable {
 	e.BoxType = ThinBoxType
-	e.ApplySelection()
+	e.Redraw()
 	return e
 }
 
 func (e *LargeInputArea) Redraw() {
-	ClearArea(e.Row, e.Col, e.Width, e.Height)
+	//ClearArea(e.Row, e.Col, e.Width, e.Height)
 	e.Draw()
 }
 
@@ -211,6 +254,9 @@ func BoxCharLnCond(index1 string, index2 string, condition bool) error {
 }
 
 func ClearArea(areaRow, areaCol, width, height int) {
+	rmm.MuLock()
+	defer rmm.MuUnLock()
+
 	var builder strings.Builder
 	builder.WriteString(strings.Repeat(" ", width))
 	str := builder.String()
@@ -229,6 +275,9 @@ func DrawBasicBox(width, height int, boxType int) {
 }
 
 func DrawBox(width, height int, boxType int, scrollPercent float32) {
+	rmm.MuLock()
+	defer rmm.MuUnLock()
+
 	isThin := boxType == 0
 	boxRow, boxCol := CursorRow, CursorCol
 
