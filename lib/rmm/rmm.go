@@ -238,8 +238,7 @@ func ScanStrCustom(target *string, settings ScanStrSettings) (status int, err er
 
 		mu.Lock()
 		MoveCursor(cRow, cCol)
-		//fmt.Print(string(input))
-		fmt.Print("ksisbidi")
+		fmt.Print(string(input))
 		MoveCursor(cRow, cCol+calculateVisualCursor(input, userCursor))
 		mu.Unlock()
 	}
