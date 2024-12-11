@@ -32,10 +32,16 @@ type MessageArea struct {
 	element
 	ScrollPercent float32
 	Messages      []Message
-	InputArea     *LargeInputArea
 }
 
-func NewMessageArea(row, col, width, height int, InputArea *LargeInputArea) *MessageArea {
+func MakeMessage(author, message string) Message {
+	return Message{
+		Author:  author,
+		Message: message,
+	}
+}
+
+func NewMessageArea(row, col, width, height int) *MessageArea {
 	ma := &MessageArea{
 		element: element{
 			Row:    row,
@@ -46,7 +52,6 @@ func NewMessageArea(row, col, width, height int, InputArea *LargeInputArea) *Mes
 
 		ScrollPercent: 0,
 		Messages:      []Message{},
-		InputArea:     InputArea,
 	}
 
 	ma.Draw()
@@ -61,6 +66,8 @@ func (e *MessageArea) Redraw() {
 func (e *MessageArea) Draw() {
 	SetCursor(e.Row, e.Col)
 	DrawBox(e.Width, e.Height, e.BoxType, e.ScrollPercent)
+
+	rmm.MuPrint(4, 2, e.Messages)
 	//TODO: draw messages
 }
 
@@ -114,9 +121,10 @@ func (e *MessageArea) doStuff() {
 type LargeInputArea struct {
 	element
 	SavedStr string
+	Ma       *MessageArea
 }
 
-func NewLargeInputArea(row, col, width, height int) *LargeInputArea {
+func NewLargeInputArea(row, col, width, height int, ma *MessageArea) *LargeInputArea {
 	lia := &LargeInputArea{
 		element: element{
 			Row:    row,
@@ -125,6 +133,7 @@ func NewLargeInputArea(row, col, width, height int) *LargeInputArea {
 			Height: height,
 		},
 		SavedStr: "",
+		Ma:       ma,
 	}
 
 	lia.Draw()
@@ -148,6 +157,9 @@ func (e *LargeInputArea) ApplySelection() {
 	// Repeat input if sent
 	for status == 0 {
 		status, _ = rmm.SOASatPos(&a, e.SavedStr, e.Row+1, e.Col+1)
+		if status == 0 {
+			e.Ma.AddMessage(MakeMessage("test", a))
+		}
 		e.SavedStr = ""
 	}
 

@@ -16,11 +16,9 @@ func LoadDocument() {
 		"ia": nil,
 	}
 
-	largeInputArea := elements.NewLargeInputArea(int(rmm.TSize.Height)-2, 1, int(rmm.TSize.Width), 3)
-	ElementList["ia"] = largeInputArea
-
-	ElementList["ma"] = elements.NewMessageArea(2, 1, int(rmm.TSize.Width), int(rmm.TSize.Height)-4, largeInputArea)
-
+	messageArea := elements.NewMessageArea(2, 1, int(rmm.TSize.Width), int(rmm.TSize.Height)-4)
+	ElementList["ma"] = messageArea
+	ElementList["ia"] = elements.NewLargeInputArea(int(rmm.TSize.Height)-2, 1, int(rmm.TSize.Width), 3, messageArea)
 }
 
 func NewDocument() {
