@@ -32,9 +32,10 @@ type MessageArea struct {
 	element
 	ScrollPercent float32
 	Messages      []Message
+	InputArea     *LargeInputArea
 }
 
-func NewMessageArea(row, col, width, height int) *MessageArea {
+func NewMessageArea(row, col, width, height int, InputArea *LargeInputArea) *MessageArea {
 	ma := &MessageArea{
 		element: element{
 			Row:    row,
@@ -45,6 +46,7 @@ func NewMessageArea(row, col, width, height int) *MessageArea {
 
 		ScrollPercent: 0,
 		Messages:      []Message{},
+		InputArea:     InputArea,
 	}
 
 	ma.Draw()
