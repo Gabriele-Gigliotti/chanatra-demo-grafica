@@ -3,7 +3,6 @@ package document
 import (
 	"drawino/document/elements" // middle management between documents and rmm
 	"drawino/lib/rmm"
-	"fmt"
 )
 
 var (
@@ -34,9 +33,6 @@ func NewDocument() {
 			v.Deselect()
 		}
 	}
-
-	var a string
-	fmt.Scan(&a)
 }
 
 func Select(s elements.Selectable) {

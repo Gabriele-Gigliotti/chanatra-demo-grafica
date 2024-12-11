@@ -25,6 +25,9 @@ type ScanStrSettings struct {
 
 	deselect []rune
 	saved    string
+
+	row int
+	col int
 }
 
 var (
@@ -119,6 +122,7 @@ func ScanInt(target interface{}) (int, error) {
 	return status, nil
 }
 
+// the double tab problem does not come from here
 func ScanTab() {
 	reader := bufio.NewReader(os.Stdin)
 	for {
@@ -131,11 +135,17 @@ func ScanTab() {
 }
 
 func ScanStr(target *string) (int, error) {
-	return ScanStrCustom(target, ScanStrSettings{nil, nil, []rune{'\t'}, ""})
+	cRow, cCol, _ := GetCursorPosition()
+	return ScanStrCustom(target, ScanStrSettings{nil, nil, []rune{'\t'}, "", cRow, cCol})
 }
 
 func ScanOrAppendStr(target *string, saved string) (int, error) {
-	return ScanStrCustom(target, ScanStrSettings{nil, nil, []rune{'\t'}, saved})
+	cRow, cCol, _ := GetCursorPosition()
+	return ScanStrCustom(target, ScanStrSettings{nil, nil, []rune{'\t'}, saved, cRow, cCol})
+}
+
+func SOASatPos(target *string, saved string, row, col int) (int, error) {
+	return ScanStrCustom(target, ScanStrSettings{nil, nil, []rune{'\t'}, saved, row, col})
 }
 
 /*
@@ -149,7 +159,7 @@ func ScanStrCustom(target *string, settings ScanStrSettings) (status int, err er
 	deselect := settings.deselect
 	input := []rune(settings.saved)
 
-	var cRow, cCol, _ = GetCursorPosition()
+	var cRow, cCol = settings.row, settings.col
 	reader := bufio.NewReader(os.Stdin)
 
 	userCursor := len(input)
@@ -202,8 +212,7 @@ func ScanStrCustom(target *string, settings ScanStrSettings) (status int, err er
 						input = append(input[:userCursor], input[userCursor+1:]...)
 						inputLength--
 
-						MoveCursor(cRow, cCol)
-						fmt.Print(string(input) + " ")
+						MuPrint(cRow, cCol, string(input)+" ")
 					}
 				}
 			}
@@ -217,8 +226,7 @@ func ScanStrCustom(target *string, settings ScanStrSettings) (status int, err er
 				userCursor--
 				inputLength--
 
-				MoveCursor(cRow, cCol)
-				fmt.Print(string(input) + " ")
+				MuPrint(cRow, cCol, string(input)+" ")
 			}
 		}
 
@@ -228,9 +236,12 @@ func ScanStrCustom(target *string, settings ScanStrSettings) (status int, err er
 			inputLength++
 		}
 
+		mu.Lock()
 		MoveCursor(cRow, cCol)
-		fmt.Print(string(input))
+		//fmt.Print(string(input))
+		fmt.Print("ksisbidi")
 		MoveCursor(cRow, cCol+calculateVisualCursor(input, userCursor))
+		mu.Unlock()
 	}
 
 	*target = string(input) // Set target to the final input string

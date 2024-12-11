@@ -145,9 +145,7 @@ func (e *LargeInputArea) ApplySelection() {
 
 	// Repeat input if sent
 	for status == 0 {
-		SetCursor(int(rmm.TSize.Height)-1, 2)
-
-		status, _ = rmm.ScanOrAppendStr(&a, e.SavedStr)
+		status, _ = rmm.SOASatPos(&a, e.SavedStr, e.Row+1, e.Col+1)
 		e.SavedStr = ""
 	}
 
@@ -185,6 +183,7 @@ var (
 	CursorCol int = 0
 )
 
+// Strictly for making the drawing code more readable. If you can call this readable.
 var boxChars = map[string]rune{
 	"-w-e": 0x2500, // ─
 	"n-s-": 0x2502, // │
