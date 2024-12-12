@@ -13,6 +13,8 @@ type Selectable interface {
 	Select() Selectable
 	Deselect() Selectable
 	Start()
+	Draw()
+	Redraw()
 }
 
 type element struct {

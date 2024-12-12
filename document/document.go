@@ -3,6 +3,7 @@ package document
 import (
 	"drawino/document/elements" // middle management between documents and rmm
 	"drawino/lib/rmm"
+	"time"
 )
 
 var (
@@ -11,6 +12,7 @@ var (
 )
 
 func LoadDocument() {
+	rmm.ResetTerm()
 	ElementList = map[string]elements.Selectable{
 		"ma": nil,
 		"ia": nil,
@@ -23,8 +25,10 @@ func LoadDocument() {
 
 func NewDocument() {
 	rmm.SetRawMode()
-	rmm.ResetTerm()
+
 	LoadDocument()
+	go ResizeWithTerm()
+
 	for _, v := range ElementList {
 		v.Start()
 	}
@@ -45,4 +49,17 @@ func Select(s elements.Selectable) {
 func Deselect(s elements.Selectable) {
 	CurrentSelected = nil
 	s.Deselect()
+}
+
+func ResizeWithTerm() {
+	var formerSize rmm.TerminalSize
+	for {
+		formerSize = rmm.TSize
+		rmm.InitTerminalSize()
+		if formerSize != rmm.TSize {
+			LoadDocument()
+		} else {
+			time.Sleep(1 * time.Second)
+		}
+	}
 }
