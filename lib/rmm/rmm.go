@@ -10,7 +10,6 @@ import (
 	"strings"
 	"sync"
 	"syscall"
-	"unicode"
 	"unsafe"
 )
 
@@ -212,7 +211,7 @@ func ScanStrCustom(target *string, settings ScanStrSettings) (status int, err er
 						input = append(input[:userCursor], input[userCursor+1:]...)
 						inputLength--
 
-						MuPrint(cRow, cCol, string(input)+" ")
+						printCursoredString(cRow, cCol, userCursor, input)
 					}
 				}
 			}
@@ -226,7 +225,7 @@ func ScanStrCustom(target *string, settings ScanStrSettings) (status int, err er
 				userCursor--
 				inputLength--
 
-				MuPrint(cRow, cCol, string(input)+" ")
+				printCursoredString(cRow, cCol, userCursor, input)
 			}
 		}
 
@@ -236,11 +235,7 @@ func ScanStrCustom(target *string, settings ScanStrSettings) (status int, err er
 			inputLength++
 		}
 
-		mu.Lock()
-		MoveCursor(cRow, cCol)
-		fmt.Print(string(input))
-		MoveCursor(cRow, cCol+calculateVisualCursor(input, userCursor))
-		mu.Unlock()
+		printCursoredString(cRow, cCol, userCursor, input)
 	}
 
 	*target = string(input) // Set target to the final input string
@@ -252,19 +247,28 @@ func ScanStrCustom(target *string, settings ScanStrSettings) (status int, err er
 	return
 }
 
-func charWidth(r rune) int {
-	if /*unicode.Is(unicode.CJKUnifiedIdeographs, r) ||*/ unicode.Is(unicode.Hiragana, r) || unicode.Is(unicode.Katakana, r) || unicode.Is(unicode.Hangul, r) {
-		return 2
-	}
-	return 1
-}
+func printCursoredString(cRow, cCol, userCursor int, input []rune) {
+	mu.Lock()
+	MoveCursor(cRow, cCol)
 
-func calculateVisualCursor(input []rune, cursorPos int) int {
-	visualPos := 0
-	for i := 0; i < cursorPos; i++ {
-		visualPos += charWidth(input[i])
+	for i := 0; i <= len(input); i++ {
+		switch i {
+		case len(input):
+			if i == userCursor {
+				fmt.Print("\x1b[7m")
+				fmt.Print(" ")
+				fmt.Print("\x1b[27m")
+			}
+		case userCursor:
+			fmt.Print("\x1b[7m")
+			fmt.Print(string(input[i]))
+			fmt.Print("\x1b[27m")
+		default:
+			fmt.Print(string(input[i]))
+		}
 	}
-	return visualPos
+	fmt.Print(" ")
+	mu.Unlock()
 }
 
 func itemExists(list []rune, item rune) bool {
